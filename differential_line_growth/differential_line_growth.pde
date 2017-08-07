@@ -1,8 +1,10 @@
+import nervoussystem.obj.*;
+
 import processing.dxf.*;
 
 // PARAMETERS
 float _maxForce = 0.9; // Maximum steering force
-float _maxForceNoise = 3 /*Float.NaN*/; // Maximum steering force variation (if == Float.NaN it's disabled)
+float _maxForceNoise = Float.NaN; // Maximum steering force variation (if == Float.NaN it's disabled)
 float _maxSpeed = 0.9; // Maximum speed
 float _desiredSeparation = 10;
 float _separationCohesionRation = 1.1;
@@ -25,10 +27,11 @@ void setup() {
     _diff_line.addNode(new Node(x, y, _diff_line.maxForce, _diff_line.maxSpeed));
   }
 
-  //_diff_line.blindRun(100);
-  //_diff_line.exportGraphics();
+  _diff_line.blindRun(500);
+  //_diff_line.exportDXF();
+  _diff_line.exportOBJ();
 
-  //exit();
+  exit();
 }
 
 void draw() {
@@ -227,7 +230,7 @@ class DifferentialLine {
     saveFrame("frames/#####.tga");
   }
 
-  void exportGraphics() {
+  void exportDXF() {
     String export_name = day()+""+hour()+""+minute()+""+second();
     PGraphics pg = createGraphics(1280, 720);
     beginRaw(DXF, export_name+".dxf");   
@@ -247,6 +250,22 @@ class DifferentialLine {
     pg.endDraw();
     pg.save(export_name+".png");
     endRaw();
+  }
+
+  void exportOBJ() {
+    String export_name = day()+""+hour()+""+minute()+""+second();
+    OBJExport obj = (OBJExport) createGraphics(1280,720,"nervoussystem.obj.OBJExport", export_name+".obj");
+    obj.beginDraw();
+    for (int i=0; i<nodes.size()-1; i++) {
+      PVector p1 = nodes.get(i).position;
+      PVector p2 = nodes.get(i+1).position;
+      obj.line(p1.x, p1.y, p2.x, p2.y);
+      if (i==nodes.size()-2) {
+        obj.line(p2.x, p2.y, nodes.get(0).position.x, nodes.get(0).position.y);
+      }
+    }
+    obj.endDraw();
+    obj.dispose();
   }
 }
 
@@ -289,5 +308,11 @@ class Node {
   void render() {
     fill(0);
     ellipse(position.x, position.y, 2, 2);
+  }
+}
+
+void keyPressed() {
+  if (key == 's' || key == 'S') {
+    _diff_line.exportFrame();
   }
 }
