@@ -2,6 +2,7 @@ import processing.dxf.*;
 
 // PARAMETERS
 float _maxForce = 0.9; // Maximum steering force
+float _maxForceNoise = 3 /*Float.NaN*/; // Maximum steering force variation (if == Float.NaN it's disabled)
 float _maxSpeed = 0.9; // Maximum speed
 float _desiredSeparation = 10;
 float _separationCohesionRation = 1.1;
@@ -12,7 +13,7 @@ DifferentialLine _diff_line;
 void setup() {
   size(1280, 720, FX2D );
 
-  _diff_line = new DifferentialLine(_maxForce, _maxSpeed, _desiredSeparation, _separationCohesionRation, _maxEdgeLen);
+  _diff_line = new DifferentialLine(_maxForce, _maxForceNoise, _maxSpeed, _desiredSeparation, _separationCohesionRation, _maxEdgeLen);
 
   float nodesStart = 20;
   float angInc = TWO_PI/nodesStart;
@@ -46,16 +47,18 @@ void draw() {
 class DifferentialLine {
   ArrayList<Node> nodes;
   float maxForce;
+  float maxForceNoise;
   float maxSpeed;
   float desiredSeparation;
   float sq_desiredSeparation;
   float separationCohesionRation;
   float maxEdgeLen;
 
-  DifferentialLine(float mF, float mS, float dS, float sCr, float eL) {
+  DifferentialLine(float mF, float mFn, float mS, float dS, float sCr, float eL) {
     nodes = new ArrayList<Node>();
-    maxSpeed = mF;
-    maxForce = mS;
+    maxForce = mF;
+    maxForceNoise = mFn;
+    maxSpeed = mS;
     desiredSeparation = dS;
     sq_desiredSeparation = sq(desiredSeparation);
     separationCohesionRation = sCr;
@@ -100,6 +103,9 @@ class DifferentialLine {
   }
 
   void differentiate() {
+
+    updateMaxForceByPosition();
+
     PVector[] separationForces = getSeparationForces();
     PVector[] cohesionForces = getEdgeCohesionForces();
 
@@ -112,6 +118,15 @@ class DifferentialLine {
       nodes.get(i).applyForce(separation);
       nodes.get(i).applyForce(cohesion);
       nodes.get(i).update();
+    }
+  }
+
+  void updateMaxForceByPosition() {
+    if (!Float.isNaN(maxForceNoise)) {
+      for (int i=0; i<nodes.size(); i++) {
+        float new_max_force = noise(nodes.get(i).position.x/10, nodes.get(i).position.y/10) * maxForceNoise;
+        nodes.get(i).maxForce = new_max_force;
+      }
     }
   }
 
