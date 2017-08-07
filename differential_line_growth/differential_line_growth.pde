@@ -1,5 +1,4 @@
 import nervoussystem.obj.*;
-
 import processing.dxf.*;
 
 // PARAMETERS
@@ -9,6 +8,10 @@ float _maxSpeed = 0.9; // Maximum speed
 float _desiredSeparation = 10;
 float _separationCohesionRation = 1.1;
 float _maxEdgeLen = 5;
+
+color background_color = color(0, 5, 10);
+color stroke_color = color(255, 255, 220);
+color fill_color = color(255, 255, 220);
 
 DifferentialLine _diff_line;  
 
@@ -35,14 +38,8 @@ void setup() {
 }
 
 void draw() {
-  //fill(0, 5, 10, 200);
-  //rect(0, 0, width, height);
-  background(0, 5, 10);
-
-  stroke(255, 250, 220);
-
   _diff_line.run();
-  _diff_line.renderLine();
+  _diff_line.renderAsLine();
 
   //_diff_line.exportMovieFrame();
 }
@@ -203,7 +200,10 @@ class DifferentialLine {
     return cohesionForces;
   }
 
-  void renderShape() {
+  void renderAsShape() {
+    background(background_color);
+    stroke(stroke_color);
+    fill(fill_color);
     beginShape();
     for (int i=0; i<nodes.size(); i++) {
       vertex(nodes.get(i).position.x, nodes.get(i).position.y);
@@ -211,7 +211,9 @@ class DifferentialLine {
     endShape(CLOSE);
   }
 
-  void renderLine() {
+  void renderAsLine() {
+    background(background_color);
+    stroke(stroke_color);
     for (int i=0; i<nodes.size()-1; i++) {
       PVector p1 = nodes.get(i).position;
       PVector p2 = nodes.get(i+1).position;
@@ -222,8 +224,12 @@ class DifferentialLine {
     }
   }
 
-  void exportFrame() {
+  void exportPNG() {
     saveFrame(day()+""+hour()+""+minute()+""+second()+".png");
+  }
+
+  void exportPNG(String name) {
+    saveFrame(name + ".png");
   }
 
   void exportMovieFrame() {
@@ -232,40 +238,38 @@ class DifferentialLine {
 
   void exportDXF() {
     String export_name = day()+""+hour()+""+minute()+""+second();
-    PGraphics pg = createGraphics(1280, 720);
-    beginRaw(DXF, export_name+".dxf");   
+    PGraphics pg = createGraphics(1280, 720, DXF, export_name+".dxf");
     pg.beginDraw();
-    pg.background(255);
-    pg.stroke(0);
     for (int i=0; i<nodes.size()-1; i++) {
       PVector p1 = nodes.get(i).position;
       PVector p2 = nodes.get(i+1).position;
       pg.line(p1.x, p1.y, p2.x, p2.y);
-      line(p1.x, p1.y, p2.x, p2.y);
       if (i==nodes.size()-2) {
         pg.line(p2.x, p2.y, nodes.get(0).position.x, nodes.get(0).position.y);
-        line(p2.x, p2.y, nodes.get(0).position.x, nodes.get(0).position.y);
       }
     }
     pg.endDraw();
-    pg.save(export_name+".png");
-    endRaw();
+    pg.endRaw();
+
+    renderAsLine();
+    exportPNG(export_name);
   }
 
   void exportOBJ() {
     String export_name = day()+""+hour()+""+minute()+""+second();
-    OBJExport obj = (OBJExport) createGraphics(1280,720,"nervoussystem.obj.OBJExport", export_name+".obj");
+    OBJExport obj = (OBJExport) createGraphics(1280, 720, "nervoussystem.obj.OBJExport", export_name+".obj");
     obj.beginDraw();
-    for (int i=0; i<nodes.size()-1; i++) {
+    obj.beginShape();
+    for (int i=0; i<nodes.size(); i++) {
       PVector p1 = nodes.get(i).position;
-      PVector p2 = nodes.get(i+1).position;
-      obj.line(p1.x, p1.y, p2.x, p2.y);
-      if (i==nodes.size()-2) {
-        obj.line(p2.x, p2.y, nodes.get(0).position.x, nodes.get(0).position.y);
-      }
+      obj.vertex(p1.x, p1.y);
     }
+    obj.endShape();
     obj.endDraw();
     obj.dispose();
+
+    renderAsLine();
+    exportPNG(export_name);
   }
 }
 
@@ -313,6 +317,6 @@ class Node {
 
 void keyPressed() {
   if (key == 's' || key == 'S') {
-    _diff_line.exportFrame();
+    _diff_line.exportPNG();
   }
 }
