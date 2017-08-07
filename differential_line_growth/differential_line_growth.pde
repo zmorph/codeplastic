@@ -3,7 +3,7 @@ import processing.dxf.*;
 
 // PARAMETERS
 float _maxForce = 0.9; // Maximum steering force
-float _maxForceNoise = Float.NaN; // Maximum steering force variation (if == Float.NaN it's disabled)
+float _maxForceNoise = 2.5 /*Float.NaN*/; // Maximum steering force variation (if == Float.NaN it's disabled)
 float _maxSpeed = 0.9; // Maximum speed
 float _desiredSeparation = 10;
 float _separationCohesionRation = 1.1;
@@ -30,11 +30,10 @@ void setup() {
     _diff_line.addNode(new Node(x, y, _diff_line.maxForce, _diff_line.maxSpeed));
   }
 
-  _diff_line.blindRun(500);
+  //_diff_line.blindRun(500);
   //_diff_line.exportDXF();
-  _diff_line.exportOBJ();
-
-  exit();
+  //_diff_line.exportOBJ();
+  //exit();
 }
 
 void draw() {
