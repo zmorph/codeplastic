@@ -1,3 +1,10 @@
+enum PrintType {
+  SINGLE_COLOR_EXTRUDER_1, 
+    SINGLE_COLOR_EXTRUDER_2, 
+    DUAL_COLOR, 
+    MULTI_COLOR,
+}
+
 class GcodeGenerator {
 
   ArrayList<String> gcode;
@@ -15,6 +22,8 @@ class GcodeGenerator {
 
   GcodeGenerator generate() {
     gcode = new ArrayList<String>();
+
+    printPrintType(getPrintType());
 
     float extrusion_multiplier = 1;
 
@@ -45,6 +54,50 @@ class GcodeGenerator {
     endPrint();
 
     return this;
+  }
+
+  void printPrintType(PrintType type) {
+    switch(type) {
+    case SINGLE_COLOR_EXTRUDER_1:
+      println("SINGLE_COLOR_EXTRUDER_1");
+      break;
+    case SINGLE_COLOR_EXTRUDER_2: 
+      println("SINGLE_COLOR_EXTRUDER_2");
+      break;
+    case DUAL_COLOR:
+      println("DUAL_COLOR");
+      break;
+    case MULTI_COLOR:
+      println("MULTI_COLOR");
+      break;
+    }
+  }
+
+  PrintType getPrintType() {
+    PrintType print_type =  PrintType.SINGLE_COLOR_EXTRUDER_1;
+
+    float first_gradient = processor.paths.get(0).gradient;
+
+    if (abs(first_gradient-1)<EPSILON)
+      print_type = PrintType.SINGLE_COLOR_EXTRUDER_1;
+    else if (abs(first_gradient-0)<EPSILON)
+      print_type = PrintType.SINGLE_COLOR_EXTRUDER_2;
+    else 
+    print_type = PrintType.MULTI_COLOR;
+
+    println(EPSILON);
+    printPrintType(print_type);
+
+    for (Path path : processor.paths) {
+      if (abs(path.gradient-first_gradient)<EPSILON)
+        continue;
+      else if (abs(path.gradient-first_gradient-1)<EPSILON)
+        print_type = PrintType.DUAL_COLOR;
+      else
+        print_type = PrintType.MULTI_COLOR;
+    }
+
+    return print_type;
   }
 
   int getLayerNumber(PVector p) {

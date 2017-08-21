@@ -14,12 +14,17 @@ class Drawer {
 
   void displayPaths() { 
     for (Path path : processor.paths) {
+      stroke(getColorPath(path));
       for (int i=0; i< path.vertices.size()-1; i++) {
         PVector p1 = path.vertices.get(i);
         PVector p2 = path.vertices.get(i + 1);
         line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
       }
     }
+  }
+
+  color getColorPath(Path p) {
+    return lerpColor(color(0, 255, 0), color(0, 0, 255), p.gradient);
   }
 
   void displayPaths(color c) {

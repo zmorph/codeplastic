@@ -1,8 +1,13 @@
 class Path {
   ArrayList<PVector> vertices;
+  float gradient = 1;
 
   Path() {
     vertices = new ArrayList<PVector>();
+  }
+
+  void setGradient(float g) {
+    gradient = g;
   }
 
   void addPoint(PVector p) {

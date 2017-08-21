@@ -49,7 +49,10 @@ class Vase extends Creator {
 
     float oscillation_Z = 0;
 
+    float gradient = 1;
+
     for (int layer = 0; layer<tot_layers; layer++) {
+      gradient = map(layer, 0, tot_layers, 0, 1);
 
       z += settings.layer_height;
       rotation += increment_rotation;
@@ -72,6 +75,7 @@ class Vase extends Creator {
       }
 
       new_path.makeClosed();
+      new_path.setGradient(gradient);
       paths.add(new_path);
     }
   }
