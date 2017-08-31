@@ -28,7 +28,8 @@ class Vase extends Creator {
   float amount_oscillation_Z = 0;
   float increment_oscillation_Z = 0;
 
-
+  float top_gradient = 1.0;
+  float bottom_gradient = 1.0;
 
   Vase(Printer t_printer, Settings t_settings, float c_x, float c_y) {
     super(t_printer, t_settings);
@@ -52,7 +53,8 @@ class Vase extends Creator {
     float gradient = 1;
 
     for (int layer = 0; layer<tot_layers; layer++) {
-      gradient = map(layer, 0, tot_layers, 0, 1);
+
+      gradient = map(layer, 0, tot_layers, bottom_gradient, top_gradient);
 
       z += settings.layer_height;
       rotation += increment_rotation;
@@ -134,6 +136,15 @@ class Vase extends Creator {
 
   Vase setOscillationZ(float w_z) {
     increment_oscillation_Z = w_z;
+    return this;
+  }
+
+  Vase setBottomGradient(float b_g) {
+    bottom_gradient = b_g;
+    return this;
+  }
+  Vase setTopGradient(float t_g) {
+    top_gradient = t_g;
     return this;
   }
 }

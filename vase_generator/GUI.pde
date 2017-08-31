@@ -20,6 +20,9 @@ void setGui() {
   cp5.addSlider("amount_oscillation_Z").setPosition(start_X, start_Y+=2*inc_Y).setRange(0, 50).setCaptionLabel("amount oscillation Z (mm)").setColorCaptionLabel(100).setValue(0);
   cp5.addSlider("increment_oscillation_Z").setPosition(start_X, start_Y+=inc_Y).setRange(0, QUARTER_PI/15).setCaptionLabel("increment oscillation Z (rad)").setColorCaptionLabel(100).setValue(0);
 
+  cp5.addSlider("top_gradient").setPosition(start_X, start_Y+=2*inc_Y).setRange(0, 1).setCaptionLabel("Top gradient").setColorCaptionLabel(100).setValue(1);
+  cp5.addSlider("bottom_gradient").setPosition(start_X, start_Y+=inc_Y).setRange(0, 1).setCaptionLabel("Bottom gradient").setColorCaptionLabel(100).setValue(1);
+
   cp5.addButton("Export GCODE").setPosition(10, height-50).setHeight(40).setWidth(int(0.2*width)-10).setColorLabel(10).setColorBackground(color(0, 200, 0));
 }
 
@@ -51,6 +54,12 @@ void controlEvent(ControlEvent theEvent) {
       builder.update();
     } else if (theEvent.getController().getName()=="increment_oscillation_Z") {
       builder.vase.setOscillationZ(cp5.getController("increment_oscillation_Z").getValue());
+      builder.update();
+    } else if (theEvent.getController().getName()=="bottom_gradient") {
+      builder.vase.setBottomGradient(cp5.getController("bottom_gradient").getValue());
+      builder.update();
+    } else if (theEvent.getController().getName()=="top_gradient") {
+      builder.vase.setTopGradient(cp5.getController("top_gradient").getValue());
       builder.update();
     } else if (theEvent.getController().getName()=="Export GCODE") {
       builder.exportGcode();
