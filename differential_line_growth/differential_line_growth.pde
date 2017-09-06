@@ -100,9 +100,11 @@ class DifferentialLine {
   void differentiate() {
 
     updateMaxForceByPosition();
+    
+    PVector[][] forces = getForces();
 
-    PVector[] separationForces = getSeparationForces();
-    PVector[] cohesionForces = getEdgeCohesionForces();
+    PVector[] separationForces = forces[0];
+    PVector[] cohesionForces = forces[1];
 
     for (int i=0; i<nodes.size(); i++) {
       PVector separation = separationForces[i];
@@ -125,15 +127,18 @@ class DifferentialLine {
     }
   }
 
-  PVector[] getSeparationForces() {
+  PVector[][] getForces() {
     int n = nodes.size();
-    PVector[] separateForces=new PVector[n];
+    PVector[] separateForces = new PVector[n];
+    PVector[] cohesionForces = new PVector[n];
     int[] nearNodes = new int[n];
 
     Node nodei;
     Node nodej;
 
     for (int i=0; i<n; i++) {
+      cohesionForces[i] = getEdgeCohesionForce(i);
+      
       if (separateForces[i]==null)
         separateForces[i]=new PVector();
       nodei=nodes.get(i);
@@ -159,8 +164,12 @@ class DifferentialLine {
         separateForces[i].limit(maxForce);
       }
     }
+    
+    PVector[][] forces = new PVector[2][];
+    forces[0] = separateForces;
+    forces[1] = cohesionForces;
 
-    return separateForces;
+    return forces;
   }
 
   PVector getSeparationForce(Node n1, Node n2) {
@@ -175,24 +184,37 @@ class DifferentialLine {
     return steer;
   }
 
-  PVector[] getEdgeCohesionForces() {
-    int n = nodes.size();
-    PVector[] cohesionForces=new PVector[n];
+  //PVector[] getEdgeCohesionForces() {
+  //  int n = nodes.size();
+  //  PVector[] cohesionForces=new PVector[n];
 
-    for (int i=0; i<nodes.size(); i++) {
-      PVector sum = new PVector(0, 0);      
-      if (i!=0 && i!=nodes.size()-1) {
-        sum.add(nodes.get(i-1).position).add(nodes.get(i+1).position);
-      } else if (i == 0) {
-        sum.add(nodes.get(nodes.size()-1).position).add(nodes.get(i+1).position);
-      } else if (i == nodes.size()-1) {
-        sum.add(nodes.get(i-1).position).add(nodes.get(0).position);
-      }
-      sum.div(2);
-      cohesionForces[i] = nodes.get(i).seek(sum);
+  //  for (int i=0; i<nodes.size(); i++) {
+  //    PVector sum = new PVector(0, 0);      
+  //    if (i!=0 && i!=nodes.size()-1) {
+  //      sum.add(nodes.get(i-1).position).add(nodes.get(i+1).position);
+  //    } else if (i == 0) {
+  //      sum.add(nodes.get(nodes.size()-1).position).add(nodes.get(i+1).position);
+  //    } else if (i == nodes.size()-1) {
+  //      sum.add(nodes.get(i-1).position).add(nodes.get(0).position);
+  //    }
+  //    sum.div(2);
+  //    cohesionForces[i] = nodes.get(i).seek(sum);
+  //  }
+
+  //  return cohesionForces;
+  //}
+
+  PVector getEdgeCohesionForce(int i) {
+    PVector sum = new PVector(0, 0);      
+    if (i!=0 && i!=nodes.size()-1) {
+      sum.add(nodes.get(i-1).position).add(nodes.get(i+1).position);
+    } else if (i == 0) {
+      sum.add(nodes.get(nodes.size()-1).position).add(nodes.get(i+1).position);
+    } else if (i == nodes.size()-1) {
+      sum.add(nodes.get(i-1).position).add(nodes.get(0).position);
     }
-
-    return cohesionForces;
+    sum.div(2);
+    return nodes.get(i).seek(sum);
   }
 
   void renderAsShape() {
