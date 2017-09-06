@@ -3,32 +3,24 @@ import processing.dxf.*;
 
 // PARAMETERS
 float _maxForce = 0.9; // Maximum steering force
-float _maxForceNoise = 2.5 /*Float.NaN*/; // Maximum steering force variation (if == Float.NaN it's disabled)
-float _maxSpeed = 0.9; // Maximum speed
-float _desiredSeparation = 10;
-float _separationCohesionRation = 1.1;
-float _maxEdgeLen = 5;
+float _maxForceNoise = 2.75 /*Float.NaN*/; // Maximum steering force variation (if == Float.NaN it's disabled)
+float _maxSpeed = 1.0; // Maximum speed
+float _desiredSeparation = 4;
+float _separationCohesionRation = 1.3;
+float _maxEdgeLen = 4;
 
 color background_color = color(0, 5, 10);
 color stroke_color = color(255, 255, 220);
 color fill_color = color(255, 255, 220);
+
+long _randomSeed;
 
 DifferentialLine _diff_line;  
 
 void setup() {
   size(1280, 720, FX2D );
 
-  _diff_line = new DifferentialLine(_maxForce, _maxForceNoise, _maxSpeed, _desiredSeparation, _separationCohesionRation, _maxEdgeLen);
-
-  float nodesStart = 20;
-  float angInc = TWO_PI/nodesStart;
-  float rayStart = 10;
-
-  for (float a=0; a<TWO_PI; a+=angInc) {
-    float x = width/2 + cos(a) * rayStart;
-    float y = height/2 + sin(a) * rayStart;
-    _diff_line.addNode(new Node(x, y, _diff_line.maxForce, _diff_line.maxSpeed));
-  }
+  startNewLine();
 
   //_diff_line.blindRun(500);
   //_diff_line.exportDXF();
@@ -37,6 +29,10 @@ void setup() {
 }
 
 void draw() {
+  background(background_color);
+
+  displayFrameRate();
+
   _diff_line.run();
   _diff_line.renderAsLine();
 
@@ -138,12 +134,12 @@ class DifferentialLine {
     Node nodej;
 
     for (int i=0; i<n; i++) {
-      separateForces[i]=new PVector();
-    }
-
-    for (int i=0; i<n; i++) {
+      if (separateForces[i]==null)
+        separateForces[i]=new PVector();
       nodei=nodes.get(i);
       for (int j=i+1; j<n; j++) {
+        if (separateForces[j] == null) 
+          separateForces[j]=new PVector();
         nodej=nodes.get(j);
         PVector forceij = getSeparationForce(nodei, nodej);
         if (forceij.mag()>0) {
@@ -200,7 +196,6 @@ class DifferentialLine {
   }
 
   void renderAsShape() {
-    background(background_color);
     stroke(stroke_color);
     fill(fill_color);
     beginShape();
@@ -211,7 +206,6 @@ class DifferentialLine {
   }
 
   void renderAsLine() {
-    background(background_color);
     stroke(stroke_color);
     for (int i=0; i<nodes.size()-1; i++) {
       PVector p1 = nodes.get(i).position;
@@ -224,11 +218,17 @@ class DifferentialLine {
   }
 
   void exportPNG() {
-    saveFrame(day()+""+hour()+""+minute()+""+second()+".png");
+    String exportName = getSaveName()+".png";
+    saveFrame(exportName);
+
+    println(exportName + " saved.");
   }
 
   void exportPNG(String name) {
+    String exportName = name+".png";
     saveFrame(name + ".png");
+
+    println(exportName + " saved.");
   }
 
   void exportMovieFrame() {
@@ -236,8 +236,8 @@ class DifferentialLine {
   }
 
   void exportDXF() {
-    String export_name = day()+""+hour()+""+minute()+""+second();
-    PGraphics pg = createGraphics(1280, 720, DXF, export_name+".dxf");
+    String exportName = getSaveName()+".dxf";
+    PGraphics pg = createGraphics(1280, 720, DXF, exportName);
     pg.beginDraw();
     for (int i=0; i<nodes.size()-1; i++) {
       PVector p1 = nodes.get(i).position;
@@ -250,13 +250,12 @@ class DifferentialLine {
     pg.endDraw();
     pg.endRaw();
 
-    renderAsLine();
-    exportPNG(export_name);
+    println(exportName + " saved.");
   }
 
   void exportOBJ() {
-    String export_name = day()+""+hour()+""+minute()+""+second();
-    OBJExport obj = (OBJExport) createGraphics(1280, 720, "nervoussystem.obj.OBJExport", export_name+".obj");
+    String exportName = getSaveName()+".obj";
+    OBJExport obj = (OBJExport) createGraphics(1280, 720, "nervoussystem.obj.OBJExport", exportName);
     obj.beginDraw();
     obj.beginShape();
     for (int i=0; i<nodes.size(); i++) {
@@ -267,8 +266,11 @@ class DifferentialLine {
     obj.endDraw();
     obj.dispose();
 
-    renderAsLine();
-    exportPNG(export_name);
+    println(exportName + " saved.");
+  }
+
+  String getSaveName() {
+    return  day()+""+hour()+""+minute()+""+second();
   }
 }
 
@@ -314,8 +316,39 @@ class Node {
   }
 }
 
+void startNewLine() {
+  _randomSeed = (long)random(-1000000, 1000000);
+  println("Random seed: " + _randomSeed);
+  randomSeed(_randomSeed);
+
+  _diff_line = new DifferentialLine(_maxForce, _maxForceNoise, _maxSpeed, _desiredSeparation, _separationCohesionRation, _maxEdgeLen);
+
+  float nodesStart = 20;
+  float angInc = TWO_PI/nodesStart;
+  float rayStart = 10;
+
+  for (float a=0; a<TWO_PI; a+=angInc) {
+    float x = width/2 + cos(a) * rayStart;
+    float y = height/2 + sin(a) * rayStart;
+    _diff_line.addNode(new Node(x, y, _diff_line.maxForce, _diff_line.maxSpeed));
+  }
+}
+
+void displayFrameRate() {
+  fill(255);
+  text((int)_randomSeed, 20, 20);
+  text((int)frameRate, 20, 35);
+}
+
+
 void keyPressed() {
   if (key == 's' || key == 'S') {
     _diff_line.exportPNG();
+  } else if (key == 'e' || key == 'E') {
+    _diff_line.exportDXF();
+    _diff_line.exportOBJ();
+    _diff_line.exportPNG();
+  } else if (key == 'r' || key == 'R') {
+    startNewLine();
   }
 }
