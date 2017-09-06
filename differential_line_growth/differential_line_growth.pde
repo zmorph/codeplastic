@@ -97,26 +97,26 @@ class DifferentialLine {
     }
   }
 
-  void differentiate() {
+  //void differentiate() {
 
-    updateMaxForceByPosition();
-    
-    PVector[][] forces = getForces();
+  //  updateMaxForceByPosition();
 
-    PVector[] separationForces = forces[0];
-    PVector[] cohesionForces = forces[1];
+  //  PVector[][] forces = getForces();
 
-    for (int i=0; i<nodes.size(); i++) {
-      PVector separation = separationForces[i];
-      PVector cohesion = cohesionForces[i];
+  //  PVector[] separationForces = forces[0];
+  //  PVector[] cohesionForces = forces[1];
 
-      separation.mult(separationCohesionRation);
+  //  for (int i=0; i<nodes.size(); i++) {
+  //    PVector separation = separationForces[i];
+  //    PVector cohesion = cohesionForces[i];
 
-      nodes.get(i).applyForce(separation);
-      nodes.get(i).applyForce(cohesion);
-      nodes.get(i).update();
-    }
-  }
+  //    separation.mult(separationCohesionRation);
+
+  //    nodes.get(i).applyForce(separation);
+  //    nodes.get(i).applyForce(cohesion);
+  //    nodes.get(i).update();
+  //  }
+  //}
 
   void updateMaxForceByPosition() {
     if (!Float.isNaN(maxForceNoise)) {
@@ -127,7 +127,10 @@ class DifferentialLine {
     }
   }
 
-  PVector[][] getForces() {
+  void differentiate() {
+    
+    updateMaxForceByPosition();
+    
     int n = nodes.size();
     PVector[] separateForces = new PVector[n];
     PVector[] cohesionForces = new PVector[n];
@@ -138,7 +141,7 @@ class DifferentialLine {
 
     for (int i=0; i<n; i++) {
       cohesionForces[i] = getEdgeCohesionForce(i);
-      
+
       if (separateForces[i]==null)
         separateForces[i]=new PVector();
       nodei=nodes.get(i);
@@ -163,13 +166,16 @@ class DifferentialLine {
         separateForces[i].sub(nodes.get(i).velocity);
         separateForces[i].limit(maxForce);
       }
-    }
-    
-    PVector[][] forces = new PVector[2][];
-    forces[0] = separateForces;
-    forces[1] = cohesionForces;
 
-    return forces;
+      PVector separation = separateForces[i];
+      PVector cohesion = cohesionForces[i];
+
+      separation.mult(separationCohesionRation);
+
+      nodes.get(i).applyForce(separation);
+      nodes.get(i).applyForce(cohesion);
+      nodes.get(i).update();
+    }
   }
 
   PVector getSeparationForce(Node n1, Node n2) {
