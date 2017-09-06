@@ -118,19 +118,15 @@ class DifferentialLine {
   //  }
   //}
 
-  void updateMaxForceByPosition() {
+  void updateMaxForceByPosition(int i) {
     if (!Float.isNaN(maxForceNoise)) {
-      for (int i=0; i<nodes.size(); i++) {
-        float new_max_force = noise(nodes.get(i).position.x/10, nodes.get(i).position.y/10) * maxForceNoise;
-        nodes.get(i).maxForce = new_max_force;
-      }
+      float new_max_force = noise(nodes.get(i).position.x/10, nodes.get(i).position.y/10) * maxForceNoise;
+      nodes.get(i).maxForce = new_max_force;
     }
   }
 
-  void differentiate() {
-    
-    updateMaxForceByPosition();
-    
+  void differentiate() {  
+
     int n = nodes.size();
     PVector[] separateForces = new PVector[n];
     PVector[] cohesionForces = new PVector[n];
@@ -140,6 +136,8 @@ class DifferentialLine {
     Node nodej;
 
     for (int i=0; i<n; i++) {
+      updateMaxForceByPosition(i);
+      
       cohesionForces[i] = getEdgeCohesionForce(i);
 
       if (separateForces[i]==null)
