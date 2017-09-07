@@ -1,4 +1,5 @@
 Flock flock;
+boolean growing = true;
 
 void setup() {
   size(640, 360);
@@ -13,8 +14,18 @@ void setup() {
 
 void draw() {
   background(50);
+  //loadPixels();
+  //for (int y=0; y<height; y++) {
+  //  for (int x=0; x<width; x++) {
+  //    pixels[width*y+x] = lerpColor(color(255, 0, 0), color(0, 0, 255), noise(x*0.01, y*0.01));
+  //  }
+  //}
+  //updatePixels();
   flock.run();
-  flock.borders();
+  //flock.borders();
+
+  if (growing)
+    flock.addBoid(new Boid(width/2, height/2));
 }
 
 // Add a new boid into the System
@@ -85,16 +96,18 @@ class Boid {
     velocity = new PVector(cos(angle), sin(angle));
 
     position = new PVector(x, y);
-    r = random(5, 20);
+    //r = random(5, 20);
+    updateRadius();
     maxspeed = 1;
     maxforce = 1;
   }
 
   void run(ArrayList<Boid> boids) {
+    updateRadius();
     checkPosition(boids);
     flock(boids);
     update();
-    borders();
+    //borders();
     render();
   }
 
@@ -125,6 +138,10 @@ class Boid {
     position.add(velocity);
     // Reset accelertion to 0 each cycle
     acceleration.mult(0);
+  }
+
+  void updateRadius() {
+    r = 5 + noise(position.x*0.01, position.y*0.01) * 20;
   }
 
   void render() {
@@ -199,5 +216,7 @@ class Boid {
 void keyPressed() {
   if (key == 'r' || key == 'R') {
     flock.restart();
+  } else if (key == 'p' || key == 'P') {
+    growing=!growing;
   }
 }
