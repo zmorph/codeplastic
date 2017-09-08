@@ -1,20 +1,20 @@
-Flock flock;
+Pack pack;
 boolean growing = false;
 
 void setup() {
   size(640, 360);
-  
+
   noiseDetail(2, 0.1);
   stroke(255);
   noFill();
-  
-  flock = new Flock();
-  flock.restart();
+
+  pack = new Pack();
+  pack.restart();
 }
 
 void draw() {
   background(50);
-  
+
   loadPixels();
   for (int y=0; y<height; y++) {
     for (int x=0; x<width; x++) {
@@ -22,110 +22,100 @@ void draw() {
     }
   }
   updatePixels();
-  
-  flock.run();
+
+  pack.run();
 
   if (growing)
-    flock.addBoid(new Node(width/2, height/2));
+    pack.addBoid(new Node(width/2, height/2));
 }
 
 
-class Flock {
+class Pack {
   ArrayList<Node> nodes; // An ArrayList for all the boids
 
   float max_speed = 1;
   float max_force = 1;
 
-  Flock() {
+  Pack() {
     nodes = new ArrayList<Node>(); // Initialize the ArrayList
   }
 
   void run() {
-    updateRadiuses();
-    checkPositions();
-    applySeparationForces();
-    displayNodes();
-  }
-
-  void checkPositions() {
-
-    Node node_i;
-    Node node_j;
-
+    
+    PVector[] separate_forces = new PVector[nodes.size()];
+    int[] near_nodes = new int[nodes.size()];
+    
     for (int i=0; i<nodes.size(); i++) {
+      updateNodeRadius(i);
+      checkNodePosition(i);
+      applySeparationForcesToNode(i, separate_forces, near_nodes);
+      displayNode(i);
+    }
+  }
 
-      node_i=nodes.get(i);
+  void checkNodePosition(int i) {
 
-      for (int j=i+1; j<=nodes.size(); j++) {
+    Node node_i=nodes.get(i);
 
-        node_j = nodes.get(j == nodes.size() ? 0 : j);
+    for (int j=i+1; j<=nodes.size(); j++) {
 
-        int count = 0;
+      Node node_j = nodes.get(j == nodes.size() ? 0 : j);
 
-        float d = PVector.dist(node_i.position, node_j.position);
+      int count = 0;
 
-        if (d < node_i.r/2+node_j.r/2) {
-          count++;
-        }
+      float d = PVector.dist(node_i.position, node_j.position);
 
-        // Zero velocity if no neighbours
-        if (count == 0) {
-          node_i.velocity.x = 0.0;
-          node_i.velocity.y = 0.0;
-        }
+      if (d < node_i.r/2+node_j.r/2) {
+        count++;
+      }
+
+      // Zero velocity if no neighbours
+      if (count == 0) {
+        node_i.velocity.x = 0.0;
+        node_i.velocity.y = 0.0;
       }
     }
   }
 
 
-  void applySeparationForces() {
+  void applySeparationForcesToNode(int i, PVector[] separate_forces, int[] near_nodes) {
 
-    int n = nodes.size();
-    PVector[] separate_forces = new PVector[n];
-    int[] near_nodes = new int[n];
+    if (separate_forces[i]==null)
+      separate_forces[i]=new PVector();
 
-    Node node_i;
-    Node node_j;
+    Node node_i=nodes.get(i);
 
-    for (int i=0; i<n; i++) {
+    for (int j=i+1; j<nodes.size(); j++) {
 
-      if (separate_forces[i]==null)
-        separate_forces[i]=new PVector();
+      if (separate_forces[j] == null) 
+        separate_forces[j]=new PVector();
 
-      node_i=nodes.get(i);
+      Node node_j=nodes.get(j);
 
-      for (int j=i+1; j<n; j++) {
+      PVector forceij = getSeparationForce(node_i, node_j);
 
-        if (separate_forces[j] == null) 
-          separate_forces[j]=new PVector();
-
-        node_j=nodes.get(j);
-
-        PVector forceij = getSeparationForce(node_i, node_j);
-
-        if (forceij.mag()>0) {
-          separate_forces[i].add(forceij);        
-          separate_forces[j].sub(forceij);
-          near_nodes[i]++;
-          near_nodes[j]++;
-        }
+      if (forceij.mag()>0) {
+        separate_forces[i].add(forceij);        
+        separate_forces[j].sub(forceij);
+        near_nodes[i]++;
+        near_nodes[j]++;
       }
-
-      if (near_nodes[i]>0) {
-        separate_forces[i].div((float)near_nodes[i]);
-      }
-
-      if (separate_forces[i].mag() >0) {
-        separate_forces[i].setMag(max_speed);
-        separate_forces[i].sub(nodes.get(i).velocity);
-        separate_forces[i].limit(max_force);
-      }
-
-      PVector separation = separate_forces[i];
-
-      nodes.get(i).applyForce(separation);
-      nodes.get(i).update();
     }
+
+    if (near_nodes[i]>0) {
+      separate_forces[i].div((float)near_nodes[i]);
+    }
+
+    if (separate_forces[i].mag() >0) {
+      separate_forces[i].setMag(max_speed);
+      separate_forces[i].sub(nodes.get(i).velocity);
+      separate_forces[i].limit(max_force);
+    }
+
+    PVector separation = separate_forces[i];
+
+    nodes.get(i).applyForce(separation);
+    nodes.get(i).update();
   }
 
   PVector getSeparationForce(Node n1, Node n2) {
@@ -140,16 +130,12 @@ class Flock {
     return steer;
   }
 
-  void updateRadiuses() {
-    for (int i=0; i<nodes.size(); i++) {
-      nodes.get(i).updateRadius();
-    }
+  void updateNodeRadius(int i) {
+    nodes.get(i).updateRadius();
   }
 
-  void displayNodes() {
-    for (int i=0; i<nodes.size(); i++) {
-      nodes.get(i).render();
-    }
+  void displayNode(int i) {
+    nodes.get(i).render();
   }
 
   void addBoid(Node b) {
@@ -159,7 +145,7 @@ class Flock {
   void restart() {
     nodes = new ArrayList<Node>(); 
     for (int i = 0; i < 100; i++) {
-      flock.addBoid(new Node(width/2, height/2));
+      pack.addBoid(new Node(width/2, height/2));
     }
   }
 }
@@ -204,16 +190,16 @@ class Node {
 
 // Add a new boid into the System
 void mousePressed() {
-  flock.addBoid(new Node(mouseX, mouseY));
+  pack.addBoid(new Node(mouseX, mouseY));
 }
 
 void mouseDragged() {
-  flock.addBoid(new Node(mouseX, mouseY));
+  pack.addBoid(new Node(mouseX, mouseY));
 }
 
 void keyPressed() {
   if (key == 'r' || key == 'R') {
-    flock.restart();
+    pack.restart();
     noiseSeed((long)random(100000));
   } else if (key == 'p' || key == 'P') {
     growing=!growing;
