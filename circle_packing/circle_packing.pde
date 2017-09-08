@@ -3,6 +3,7 @@ boolean growing = true;
 
 void setup() {
   size(640, 360);
+  noiseDetail(2,0.1);
   stroke(255);
   noFill();
   flock = new Flock();
@@ -30,6 +31,10 @@ void draw() {
 
 // Add a new boid into the System
 void mousePressed() {
+  flock.addBoid(new Boid(mouseX, mouseY));
+}
+
+void mouseDragged() {
   flock.addBoid(new Boid(mouseX, mouseY));
 }
 
@@ -119,13 +124,7 @@ class Boid {
   // We accumulate a new acceleration each time based on three rules
   void flock(ArrayList<Boid> boids) {
     PVector sep = separate(boids);   // Separation
-    //PVector coh = cohesion(boids);   // Cohesion
-    // Arbitrarily weight these forces
-    //sep.mult(1.5);
-    // coh.mult(1.0);
-    // Add the force vectors to acceleration
     applyForce(sep);
-    // applyForce(coh);
   }
 
 
@@ -141,7 +140,7 @@ class Boid {
   }
 
   void updateRadius() {
-    r = 5 + noise(position.x*0.01, position.y*0.01) * 20;
+    r = 2 + noise(position.x*0.01, position.y*0.01) * 50;
   }
 
   void render() {
@@ -188,7 +187,7 @@ class Boid {
     for (Boid other : boids) {
       float d = PVector.dist(position, other.position);
       // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
-      if ((d > 0) && (d < r/2+other.r/2)) {
+      if ((d > 0) && (d < r/2+other.r/2+5)) {
         // Calculate vector pointing away from neighbor
         PVector diff = PVector.sub(position, other.position);
         diff.normalize();
