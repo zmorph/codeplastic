@@ -3,9 +3,8 @@ Pack pack;
 boolean growing = false;
 
 void setup() {
-  size(1000, 600);
+  size(1400, 800);
 
-  background(0);
   noFill();
   stroke(255);
 
@@ -20,12 +19,14 @@ void draw() {
   pack.run();
 
   if (growing)
-    pack.addBoid(new Node(width/2, height/2));
+    pack.addCircle(new Circle(width/2, height/2));
+
+  //saveFrame("frames/#####.tif");
 }
 
 
 class Pack {
-  ArrayList<Node> nodes;
+  ArrayList<Circle> circles;
 
   float max_speed = 1;
   float max_force = 1;
@@ -35,114 +36,114 @@ class Pack {
   }
 
   void initiate() {
-    nodes = new ArrayList<Node>(); 
-    for (int i = 0; i < 750; i++) {
-      addBoid(new Node(width/2, height/2));
+    circles = new ArrayList<Circle>(); 
+    for (int i = 0; i < 500; i++) {
+      addCircle(new Circle(width/2, height/2));
     }
   }
 
-  void addBoid(Node b) {
-    nodes.add(b);
+  void addCircle(Circle b) {
+    circles.add(b);
   }
 
   void run() {
 
-    PVector[] separate_forces = new PVector[nodes.size()];
-    int[] near_nodes = new int[nodes.size()];
+    PVector[] separate_forces = new PVector[circles.size()];
+    int[] near_circles = new int[circles.size()];
 
-    for (int i=0; i<nodes.size(); i++) {
+    for (int i=0; i<circles.size(); i++) {
       checkBorders(i);
-      updateNodeRadius(i);
-      checkNodePosition(i);
-      applySeparationForcesToNode(i, separate_forces, near_nodes);
-      displayNode(i);
+      updateCircleRadius(i);
+      checkCirclePosition(i);
+      applySeparationForcesToCircle(i, separate_forces, near_circles);
+      displayCircle(i);
     }
   }
 
   void checkBorders(int i) {
-    Node node_i=nodes.get(i);
-    if (node_i.position.x-node_i.radius/2 < 0 || node_i.position.x+node_i.radius/2 > width)
+    Circle circle_i=circles.get(i);
+    if (circle_i.position.x-circle_i.radius/2 < 0 || circle_i.position.x+circle_i.radius/2 > width)
     {
-      node_i.velocity.x*=-1;
-      node_i.update();
+      circle_i.velocity.x*=-1;
+      circle_i.update();
     }
-    if (node_i.position.y-node_i.radius/2 < 0 || node_i.position.y+node_i.radius/2 > height)
+    if (circle_i.position.y-circle_i.radius/2 < 0 || circle_i.position.y+circle_i.radius/2 > height)
     {
-      node_i.velocity.y*=-1;
-      node_i.update();
+      circle_i.velocity.y*=-1;
+      circle_i.update();
     }
   }
 
-  void updateNodeRadius(int i) {
-    nodes.get(i).updateRadius();
+  void updateCircleRadius(int i) {
+    circles.get(i).updateRadius();
   }
 
-  void checkNodePosition(int i) {
+  void checkCirclePosition(int i) {
 
-    Node node_i=nodes.get(i);
+    Circle circle_i=circles.get(i);
 
-    for (int j=i+1; j<=nodes.size(); j++) {
+    for (int j=i+1; j<=circles.size(); j++) {
 
-      Node node_j = nodes.get(j == nodes.size() ? 0 : j);
+      Circle circle_j = circles.get(j == circles.size() ? 0 : j);
 
       int count = 0;
 
-      float d = PVector.dist(node_i.position, node_j.position);
+      float d = PVector.dist(circle_i.position, circle_j.position);
 
-      if (d < node_i.radius/2+node_j.radius/2) {
+      if (d < circle_i.radius/2+circle_j.radius/2) {
         count++;
       }
 
       // Zero velocity if no neighbours
       if (count == 0) {
-        node_i.velocity.x = 0.0;
-        node_i.velocity.y = 0.0;
+        circle_i.velocity.x = 0.0;
+        circle_i.velocity.y = 0.0;
       }
     }
   }
 
 
-  void applySeparationForcesToNode(int i, PVector[] separate_forces, int[] near_nodes) {
+  void applySeparationForcesToCircle(int i, PVector[] separate_forces, int[] near_circles) {
 
     if (separate_forces[i]==null)
       separate_forces[i]=new PVector();
 
-    Node node_i=nodes.get(i);
+    Circle circle_i=circles.get(i);
 
-    for (int j=i+1; j<nodes.size(); j++) {
+    for (int j=i+1; j<circles.size(); j++) {
 
       if (separate_forces[j] == null) 
         separate_forces[j]=new PVector();
 
-      Node node_j=nodes.get(j);
+      Circle circle_j=circles.get(j);
 
-      PVector forceij = getSeparationForce(node_i, node_j);
+      PVector forceij = getSeparationForce(circle_i, circle_j);
 
       if (forceij.mag()>0) {
         separate_forces[i].add(forceij);        
         separate_forces[j].sub(forceij);
-        near_nodes[i]++;
-        near_nodes[j]++;
+        near_circles[i]++;
+        near_circles[j]++;
       }
     }
 
-    if (near_nodes[i]>0) {
-      separate_forces[i].div((float)near_nodes[i]);
+    if (near_circles[i]>0) {
+      separate_forces[i].div((float)near_circles[i]);
     }
 
     if (separate_forces[i].mag() >0) {
       separate_forces[i].setMag(max_speed);
-      separate_forces[i].sub(nodes.get(i).velocity);
+      separate_forces[i].sub(circles.get(i).velocity);
       separate_forces[i].limit(max_force);
     }
 
     PVector separation = separate_forces[i];
 
-    nodes.get(i).applyForce(separation);
-    nodes.get(i).update();
+    circles.get(i).applyForce(separation);
+    circles.get(i).update();
   }
 
-  PVector getSeparationForce(Node n1, Node n2) {
+  PVector getSeparationForce(Circle n1, Circle n2) {
     PVector steer = new PVector(0, 0, 0);
     float d = PVector.dist(n1.position, n2.position);
     if ((d > 0) && (d < n1.radius/2+n2.radius/2)) {
@@ -154,19 +155,20 @@ class Pack {
     return steer;
   }
 
-  void displayNode(int i) {
-    nodes.get(i).display();
+  void displayCircle(int i) {
+    circles.get(i).display();
   }
 }
 
-class Node {
+class Circle {
 
   PVector position;
   PVector velocity;
   PVector acceleration;
+
   float radius;
 
-  Node(float x, float y) {
+  Circle(float x, float y) {
     acceleration = new PVector(0, 0);
     velocity = PVector.random2D();
     position = new PVector(x, y);
@@ -194,7 +196,7 @@ class Node {
 }
 
 void mouseDragged() {
-  pack.addBoid(new Node(mouseX, mouseY));
+  pack.addCircle(new Circle(mouseX, mouseY));
 }
 
 void keyPressed() {
@@ -203,5 +205,9 @@ void keyPressed() {
     noiseSeed((long)random(100000));
   } else if (key == 'p' || key == 'P') {
     growing=!growing;
+  } else if (key == 's' || key == 'S') {
+    String name = ""+day()+hour()+minute()+second();
+    saveFrame(name+".png");
+    println(name + " saved.");
   }
 }
