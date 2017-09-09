@@ -1,11 +1,13 @@
 Pack pack;
-boolean growing = false;
+boolean growing = true;
 
 void setup() {
-  size(640, 360);
+  size(1000, 600);
+  background(250);
 
   noiseDetail(2, 0.1);
   stroke(255);
+  noStroke();
   noFill();
 
   pack = new Pack();
@@ -13,15 +15,17 @@ void setup() {
 }
 
 void draw() {
-  background(50);
+  //background(50);
 
-  loadPixels();
-  for (int y=0; y<height; y++) {
-    for (int x=0; x<width; x++) {
-      pixels[width*y+x] = color(noise(x*0.01, y*0.01) * 255.0); /*lerpColor(color(255, 0, 0), color(0, 0, 255), noise(x*0.01, y*0.01));*/
-    }
-  }
-  updatePixels();
+  //image(img, 0, 0);
+
+  //loadPixels();
+  //for (int y=0; y<height; y++) {
+  //  for (int x=0; x<width; x++) {
+  //    pixels[width*y+x] = color(noise(x*0.01, y*0.01) * 255.0); /*lerpColor(color(255, 0, 0), color(0, 0, 255), noise(x*0.01, y*0.01));*/
+  //  }
+  //}
+  //updatePixels();
 
   pack.run();
 
@@ -41,15 +45,30 @@ class Pack {
   }
 
   void run() {
-    
+
     PVector[] separate_forces = new PVector[nodes.size()];
     int[] near_nodes = new int[nodes.size()];
-    
+
     for (int i=0; i<nodes.size(); i++) {
+      checkBorders(i);
       updateNodeRadius(i);
       checkNodePosition(i);
       applySeparationForcesToNode(i, separate_forces, near_nodes);
       displayNode(i);
+    }
+  }
+
+  void checkBorders(int i) {
+    Node node_i=nodes.get(i);
+    if (node_i.position.x-node_i.r/2 < 0 || node_i.position.x+node_i.r/2 > width)
+    {
+      node_i.velocity.x*=-1;
+      node_i.update();
+    }
+    if (node_i.position.y-node_i.r/2 < 0 || node_i.position.y+node_i.r/2 > height)
+    {
+      node_i.velocity.y*=-1;
+      node_i.update();
     }
   }
 
@@ -156,12 +175,15 @@ class Node {
   PVector velocity;
   PVector acceleration;
   float r;
+  
+  float age;
 
   Node(float x, float y) {
     acceleration = new PVector(0, 0);
     velocity = PVector.random2D();
     position = new PVector(x, y);
     updateRadius();
+    age = 0;
   }
 
   void applyForce(PVector force) {
@@ -184,6 +206,11 @@ class Node {
   }
 
   void render() {
+    float c = noise(position.x*0.01, position.y*0.01)*255;
+    //stroke(c, 10);
+    //fill(c, 10);
+    stroke(255- (age+=0.25), 240);
+    noFill();
     ellipse(position.x, position.y, r, r);
   }
 }
