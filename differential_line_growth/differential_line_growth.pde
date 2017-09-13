@@ -241,6 +241,7 @@ class DifferentialLine {
       }
     }
     pg.endDraw();
+    pg.dispose();
     pg.endRaw();
 
     println(exportName + " saved.");
