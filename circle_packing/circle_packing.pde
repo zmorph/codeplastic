@@ -1,4 +1,6 @@
+import processing.dxf.*;
 import processing.svg.*;
+
 
 Pack pack;
 
@@ -157,6 +159,38 @@ class Pack {
     return steer;
   }
 
+  void exportDXF() {
+    String exportName = getSaveName()+".dxf";
+    PGraphics pg = createGraphics(width, height, DXF, exportName);
+    pg.beginDraw();
+    for (int i=0; i<circles.size(); i++) {
+      Circle p = circles.get(i);
+      //pg.ellipse(p.position.x, p.position.y, p.radius, p.radius);
+      //pg.line(p.position.x, p.position.y, p.radius, p.radius);
+      dxfCircle(p.position.x, p.position.y, p.radius, 60, pg);
+    }
+    pg.endDraw();
+    pg.dispose();
+    pg.endRaw();
+
+    println(exportName + " saved.");
+  }
+
+  void dxfCircle(float x, float y, float r, float detail, PGraphics pg) {
+    float inc = TWO_PI / detail;
+
+    float px = x +cos(0)*r/2;
+    float py = y +sin(0)*r/2;   
+    for (float a=inc; a<TWO_PI; a+=inc) {
+      float x1 = x +cos(a)*r/2;
+      float y1 = y +sin(a)*r/2;
+      pg.line(px, py, x1, y1);
+      px=x1;
+      py=y1;
+    }
+  }
+
+
   void exportSVG() {
     String exportName = getSaveName()+".svg";
     PGraphics pg = createGraphics(width, height, SVG, exportName);
@@ -226,6 +260,7 @@ void keyPressed() {
     growing=!growing;
   } else if (key == 's' || key == 'S') {
     String name = ""+day()+hour()+minute()+second();
+    pack.exportDXF();
     pack.exportSVG();
     saveFrame(name+".png");
     println(name + " saved.");
