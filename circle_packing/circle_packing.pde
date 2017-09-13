@@ -1,3 +1,5 @@
+import processing.svg.*;
+
 Pack pack;
 
 boolean growing = false;
@@ -155,6 +157,23 @@ class Pack {
     return steer;
   }
 
+  void exportSVG() {
+    String exportName = getSaveName()+".svg";
+    PGraphics pg = createGraphics(width, height, SVG, exportName);
+    pg.beginDraw();
+    for (int i=0; i<circles.size(); i++) {
+      Circle p = circles.get(i);
+      pg.ellipse(p.position.x, p.position.y, p.radius, p.radius);
+    }
+    pg.endDraw();
+    pg.dispose();
+    println(exportName + " saved.");
+  }
+
+  String getSaveName() {
+    return  day()+""+hour()+""+minute()+""+second();
+  }
+
   void displayCircle(int i) {
     circles.get(i).display();
   }
@@ -207,6 +226,7 @@ void keyPressed() {
     growing=!growing;
   } else if (key == 's' || key == 'S') {
     String name = ""+day()+hour()+minute()+second();
+    pack.exportSVG();
     saveFrame(name+".png");
     println(name + " saved.");
   }
