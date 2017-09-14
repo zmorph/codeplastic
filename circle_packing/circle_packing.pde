@@ -165,8 +165,6 @@ class Pack {
     pg.beginDraw();
     for (int i=0; i<circles.size(); i++) {
       Circle p = circles.get(i);
-      //pg.ellipse(p.position.x, p.position.y, p.radius, p.radius);
-      //pg.line(p.position.x, p.position.y, p.radius, p.radius);
       dxfCircle(p.position.x, p.position.y, p.radius, 60, pg);
     }
     pg.endDraw();
@@ -174,7 +172,7 @@ class Pack {
     pg.endRaw();
 
     println(exportName + " saved.");
-  }
+  } 
 
   void dxfCircle(float x, float y, float r, float detail, PGraphics pg) {
     float inc = TWO_PI / detail;
