@@ -1,11 +1,13 @@
+import processing.pdf.*;
 import nervoussystem.obj.*;
 import processing.dxf.*;
 
+
 // PARAMETERS
 float _maxForce = 0.9; // Maximum steering force
-float _maxForceNoise = 2.75 /*Float.NaN*/; // Maximum steering force variation (if == Float.NaN it's disabled)
+float _maxForceNoise = /*2.75*/ Float.NaN; // Maximum steering force variation (if == Float.NaN it's disabled)
 float _maxSpeed = 1.0; // Maximum speed
-float _desiredSeparation = 4;
+float _desiredSeparation = 5;
 float _separationCohesionRation = 1.3;
 float _maxEdgeLen = 4;
 
@@ -18,7 +20,7 @@ long _randomSeed;
 DifferentialLine _diff_line;  
 
 void setup() {
-  size(1280, 720, FX2D );
+  size(200, 200, FX2D );
 
   startNewLine();
 
@@ -31,7 +33,7 @@ void setup() {
 void draw() {
   background(background_color);
 
-  displayFrameRate();
+  //displayFrameRate();
 
   _diff_line.run();
   _diff_line.renderAsLine();
@@ -99,9 +101,16 @@ class DifferentialLine {
 
   void updateMaxForceByPosition(int i) {
     if (!Float.isNaN(maxForceNoise)) {
-      float new_max_force = noise(nodes.get(i).position.x/10, nodes.get(i).position.y/10) * maxForceNoise;
+      float new_max_force = noise(nodes.get(i).position.x * 0.01, nodes.get(i).position.y * 0.01) * maxForceNoise;
       nodes.get(i).maxForce = new_max_force;
     }
+  }
+
+  void checkBorders(Node n, float border) {
+    if (n.position.x < border || n.position.x >width - border)
+      n.velocity.x*=-1;
+    if (n.position.y < border || n.position.y > height - border)
+      n.velocity.y*=-1;
   }
 
   void differentiate() {  
@@ -115,25 +124,25 @@ class DifferentialLine {
     Node nodej;
 
     for (int i=0; i<n; i++) {
-      
+
       updateMaxForceByPosition(i);
-      
+
       cohesionForces[i] = getEdgeCohesionForce(i);
 
       if (separateForces[i]==null)
         separateForces[i]=new PVector();
-        
-      nodei=nodes.get(i);
-      
+
+      nodei=nodes.get(i);  
+
       for (int j=i+1; j<n; j++) {
-        
+
         if (separateForces[j] == null) 
           separateForces[j]=new PVector();
-          
+
         nodej=nodes.get(j);
-        
+
         PVector forceij = getSeparationForce(nodei, nodej);
-        
+
         if (forceij.mag()>0) {
           separateForces[i].add(forceij);        
           separateForces[j].sub(forceij);
@@ -145,7 +154,7 @@ class DifferentialLine {
       if (nearNodes[i]>0) {
         separateForces[i].div((float)nearNodes[i]);
       }
-      
+
       if (separateForces[i].mag() >0) {
         separateForces[i].setMag(maxSpeed);
         separateForces[i].sub(nodes.get(i).velocity);
@@ -159,6 +168,7 @@ class DifferentialLine {
 
       nodes.get(i).applyForce(separation);
       nodes.get(i).applyForce(cohesion);
+      checkBorders(nodei, 4*desiredSeparation);
       nodes.get(i).update();
     }
   }
@@ -230,7 +240,7 @@ class DifferentialLine {
 
   void exportDXF() {
     String exportName = getSaveName()+".dxf";
-    PGraphics pg = createGraphics(1280, 720, DXF, exportName);
+    PGraphics pg = createGraphics(width, height, DXF, exportName);
     pg.beginDraw();
     for (int i=0; i<nodes.size()-1; i++) {
       PVector p1 = nodes.get(i).position;
@@ -247,9 +257,24 @@ class DifferentialLine {
     println(exportName + " saved.");
   }
 
+  void exportPDF() {
+    String exportName = getSaveName()+".pdf";
+    PGraphics pg = createGraphics(width, height, PDF, exportName);
+    pg.beginDraw();
+    pg.beginShape();
+    for (int i=0; i<nodes.size(); i++) {
+      pg.vertex(nodes.get(i).position.x, nodes.get(i).position.y);
+    }
+    pg.endShape(CLOSE);
+    pg.dispose();
+    pg.endDraw();
+
+    println(exportName + " saved.");
+  }
+
   void exportOBJ() {
     String exportName = getSaveName()+".obj";
-    OBJExport obj = (OBJExport) createGraphics(1280, 720, "nervoussystem.obj.OBJExport", exportName);
+    OBJExport obj = (OBJExport) createGraphics(width, height, "nervoussystem.obj.OBJExport", exportName);
     obj.beginDraw();
     obj.beginShape();
     for (int i=0; i<nodes.size(); i++) {
@@ -339,6 +364,7 @@ void keyPressed() {
   if (key == 's' || key == 'S') {
     _diff_line.exportPNG();
   } else if (key == 'e' || key == 'E') {
+    _diff_line.exportPDF();
     _diff_line.exportDXF();
     _diff_line.exportOBJ();
     _diff_line.exportPNG();
