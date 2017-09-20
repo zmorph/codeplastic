@@ -1,18 +1,20 @@
+import processing.svg.*;
 import processing.pdf.*;
 import nervoussystem.obj.*;
 import processing.dxf.*;
 
 
+
 // PARAMETERS
-float _maxForce = 0.9; // Maximum steering force
-float _maxForceNoise = /*2.75*/ Float.NaN; // Maximum steering force variation (if == Float.NaN it's disabled)
-float _maxSpeed = 1.0; // Maximum speed
+float _maxForce = 1.0; // Maximum steering force
+float _maxForceNoise = 2.75 /*Float.NaN*/; // Maximum steering force variation (if == Float.NaN it's disabled)
+float _maxSpeed = 1.3; // Maximum speed
 float _desiredSeparation = 5;
 float _separationCohesionRation = 1.3;
 float _maxEdgeLen = 4;
 
-color background_color = color(0, 5, 10);
-color stroke_color = color(255, 255, 220);
+color background_color = #f5f4f4;
+color stroke_color = color(5);
 color fill_color = color(255, 255, 220);
 
 long _randomSeed;
@@ -20,7 +22,7 @@ long _randomSeed;
 DifferentialLine _diff_line;  
 
 void setup() {
-  size(200, 200, FX2D );
+  size(400, 200, FX2D );
 
   startNewLine();
 
@@ -257,6 +259,21 @@ class DifferentialLine {
     println(exportName + " saved.");
   }
 
+  void exportSVG() {
+    String exportName = getSaveName()+".svg";
+    PGraphics pg = createGraphics(width, height, SVG, exportName);
+    pg.beginDraw();
+    pg.beginShape();
+    for (int i=0; i<nodes.size(); i++) {
+      pg.vertex(nodes.get(i).position.x, nodes.get(i).position.y);
+    }
+    pg.endShape(CLOSE);
+    pg.endDraw();
+    pg.dispose();
+
+    println(exportName + " saved.");
+  }
+
   void exportPDF() {
     String exportName = getSaveName()+".pdf";
     PGraphics pg = createGraphics(width, height, PDF, exportName);
@@ -364,9 +381,10 @@ void keyPressed() {
   if (key == 's' || key == 'S') {
     _diff_line.exportPNG();
   } else if (key == 'e' || key == 'E') {
-    _diff_line.exportPDF();
+    //_diff_line.exportPDF();
     _diff_line.exportDXF();
-    _diff_line.exportOBJ();
+    //_diff_line.exportOBJ();
+    _diff_line.exportSVG();
     _diff_line.exportPNG();
   } else if (key == 'r' || key == 'R') {
     startNewLine();
