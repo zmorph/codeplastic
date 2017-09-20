@@ -5,20 +5,22 @@ import processing.svg.*;
 Pack pack;
 
 boolean growing = false;
+int n_start = 400;
 
 void setup() {
   size(1400, 800);
 
   noFill();
-  stroke(255);
+  strokeWeight(1.5);
+  stroke(5);
 
   noiseDetail(2, 0.1);
 
-  pack = new Pack();
+  pack = new Pack(n_start);
 }
 
 void draw() {
-  background(50);
+  background(#f5f4f4);
 
   pack.run();
 
@@ -35,13 +37,13 @@ class Pack {
   float max_speed = 1;
   float max_force = 1;
 
-  Pack() {  
-    initiate();
+  Pack(int n) {  
+    initiate(n);
   }
 
-  void initiate() {
+  void initiate(int n) {
     circles = new ArrayList<Circle>(); 
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < n; i++) {
       addCircle(new Circle(width/2, height/2));
     }
   }
@@ -58,7 +60,6 @@ class Pack {
     for (int i=0; i<circles.size(); i++) {
       checkBorders(i);
       updateCircleRadius(i);
-      checkCirclePosition(i);
       applySeparationForcesToCircle(i, separate_forces, near_circles);
       displayCircle(i);
     }
@@ -81,31 +82,6 @@ class Pack {
   void updateCircleRadius(int i) {
     circles.get(i).updateRadius();
   }
-
-  void checkCirclePosition(int i) {
-
-    Circle circle_i=circles.get(i);
-
-    for (int j=i+1; j<=circles.size(); j++) {
-
-      Circle circle_j = circles.get(j == circles.size() ? 0 : j);
-
-      int count = 0;
-
-      float d = PVector.dist(circle_i.position, circle_j.position);
-
-      if (d < circle_i.radius/2+circle_j.radius/2) {
-        count++;
-      }
-
-      // Zero velocity if no neighbours
-      if (count == 0) {
-        circle_i.velocity.x = 0.0;
-        circle_i.velocity.y = 0.0;
-      }
-    }
-  }
-
 
   void applySeparationForcesToCircle(int i, PVector[] separate_forces, int[] near_circles) {
 
@@ -145,6 +121,10 @@ class Pack {
 
     circles.get(i).applyForce(separation);
     circles.get(i).update();
+
+    // If they have no intersecting neighbours they will stop moving
+    circle_i.velocity.x = 0.0;
+    circle_i.velocity.y = 0.0;
   }
 
   PVector getSeparationForce(Circle n1, Circle n2) {
@@ -252,7 +232,7 @@ void mouseDragged() {
 
 void keyPressed() {
   if (key == 'r' || key == 'R') {
-    pack.initiate();
+    pack.initiate(n_start);
     noiseSeed((long)random(100000));
   } else if (key == 'p' || key == 'P') {
     growing=!growing;
