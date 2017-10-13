@@ -139,6 +139,10 @@ class Pack {
     return steer;
   }
 
+  String getSaveName() {
+    return  day()+""+hour()+""+minute()+""+second();
+  }
+
   void exportDXF() {
     String exportName = getSaveName()+".dxf";
     PGraphics pg = createGraphics(width, height, DXF, exportName);
@@ -156,7 +160,6 @@ class Pack {
 
   void dxfCircle(float x, float y, float r, float detail, PGraphics pg) {
     float inc = TWO_PI / detail;
-
     float px = x +cos(0)*r/2;
     float py = y +sin(0)*r/2;   
     for (float a=inc; a<TWO_PI; a+=inc) {
@@ -180,10 +183,6 @@ class Pack {
     pg.endDraw();
     pg.dispose();
     println(exportName + " saved.");
-  }
-
-  String getSaveName() {
-    return  day()+""+hour()+""+minute()+""+second();
   }
 
   void displayCircle(int i) {
