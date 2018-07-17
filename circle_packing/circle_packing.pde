@@ -5,10 +5,10 @@ import processing.svg.*;
 Pack pack;
 
 boolean growing = false;
-int n_start = 400;
+int n_start = 100;
 
 void setup() {
-  size(1400, 800);
+  size(1230, 600);
 
   noFill();
   strokeWeight(1.5);
@@ -36,6 +36,11 @@ class Pack {
 
   float max_speed = 1;
   float max_force = 1;
+
+  float border = 5;
+
+  float min_radius = 5;
+  float max_radius = 200;
 
   Pack(int n) {  
     initiate(n);
@@ -67,20 +72,18 @@ class Pack {
 
   void checkBorders(int i) {
     Circle circle_i=circles.get(i);
-    if (circle_i.position.x-circle_i.radius/2 < 0 || circle_i.position.x+circle_i.radius/2 > width)
-    {
-      circle_i.velocity.x*=-1;
-      circle_i.update();
-    }
-    if (circle_i.position.y-circle_i.radius/2 < 0 || circle_i.position.y+circle_i.radius/2 > height)
-    {
-      circle_i.velocity.y*=-1;
-      circle_i.update();
-    }
+    if (circle_i.position.x-circle_i.radius/2 < border)
+      circle_i.position.x = circle_i.radius/2 + border;
+    else if (circle_i.position.x+circle_i.radius/2 > width - border)
+      circle_i.position.x = width - circle_i.radius/2 - border;
+    if (circle_i.position.y-circle_i.radius/2 < border)
+      circle_i.position.y = circle_i.radius/2 + border;
+    else if (circle_i.position.y+circle_i.radius/2 > height - border)
+      circle_i.position.y = height - circle_i.radius/2 - border;
   }
 
   void updateCircleRadius(int i) {
-    circles.get(i).updateRadius();
+    circles.get(i).updateRadius(min_radius, max_radius);
   }
 
   void applySeparationForcesToCircle(int i, PVector[] separate_forces, int[] near_circles) {
@@ -130,7 +133,7 @@ class Pack {
   PVector getSeparationForce(Circle n1, Circle n2) {
     PVector steer = new PVector(0, 0, 0);
     float d = PVector.dist(n1.position, n2.position);
-    if ((d > 0) && (d < n1.radius/2+n2.radius/2)) {
+    if ((d > 0) && (d < n1.radius/2+n2.radius/2 + border)) {
       PVector diff = PVector.sub(n1.position, n2.position);
       diff.normalize();
       diff.div(d);
@@ -145,41 +148,39 @@ class Pack {
 
   void exportDXF() {
     String exportName = getSaveName()+".dxf";
-    PGraphics pg = createGraphics(width, height, DXF, exportName);
-    pg.beginDraw();
+    RawDXF dxf = (RawDXF)createGraphics(width, height, DXF, exportName);
+    dxf.beginDraw();
     for (int i=0; i<circles.size(); i++) {
       Circle p = circles.get(i);
-      dxfCircle(p.position.x, p.position.y, p.radius, 60, pg);
+      dxfCircle(p.position.x, p.position.y, p.radius/2., dxf);
     }
-    pg.endDraw();
-    pg.dispose();
-    pg.endRaw();
+    dxf.endDraw();
+    dxf.dispose();
+    dxf.endRaw();
 
     println(exportName + " saved.");
   } 
 
-  void dxfCircle(float x, float y, float r, float detail, PGraphics pg) {
-    float inc = TWO_PI / detail;
-    float px = x +cos(0)*r/2;
-    float py = y +sin(0)*r/2;   
-    for (float a=inc; a<TWO_PI; a+=inc) {
-      float x1 = x +cos(a)*r/2;
-      float y1 = y +sin(a)*r/2;
-      pg.line(px, py, x1, y1);
-      px=x1;
-      py=y1;
-    }
+  void dxfCircle(float x, float y, float r, RawDXF dxf) {
+    dxf.println("0");
+    dxf.println("CIRCLE");
+    dxf.println("10");
+    dxf.println(Float.toString(x));
+    dxf.println("20");
+    dxf.println(Float.toString(height - y));
+    dxf.println("40");
+    dxf.println(Float.toString(r));
   }
-
 
   void exportSVG() {
     String exportName = getSaveName()+".svg";
     PGraphics pg = createGraphics(width, height, SVG, exportName);
     pg.beginDraw();
+    pg.rect(0, 0, width, height);
     for (int i=0; i<circles.size(); i++) {
       Circle p = circles.get(i);
       pg.ellipse(p.position.x, p.position.y, p.radius, p.radius);
-    }
+    } 
     pg.endDraw();
     pg.dispose();
     println(exportName + " saved.");
@@ -196,13 +197,12 @@ class Circle {
   PVector velocity;
   PVector acceleration;
 
-  float radius;
+  float radius = 1;
 
   Circle(float x, float y) {
     acceleration = new PVector(0, 0);
     velocity = PVector.random2D();
     position = new PVector(x, y);
-    updateRadius();
   }
 
   void applyForce(PVector force) {
@@ -216,8 +216,8 @@ class Circle {
     acceleration.mult(0);
   }
 
-  void updateRadius() {
-    radius = 2 + noise(position.x*0.01, position.y*0.01) * 50;
+  void updateRadius(float min, float max) {
+    radius = min + noise(position.x*0.01, position.y*0.01) * (max-min);
   }
 
   void display() {
@@ -226,6 +226,10 @@ class Circle {
 }
 
 void mouseDragged() {
+  pack.addCircle(new Circle(mouseX, mouseY));
+}
+
+void mouseClicked() {
   pack.addCircle(new Circle(mouseX, mouseY));
 }
 
